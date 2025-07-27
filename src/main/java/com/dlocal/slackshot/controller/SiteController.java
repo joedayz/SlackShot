@@ -2,8 +2,12 @@ package com.dlocal.slackshot.controller;
 
 import com.dlocal.slackshot.model.Screenshot;
 import com.dlocal.slackshot.model.Site;
+import com.dlocal.slackshot.model.ScreenshotTask;
+import com.dlocal.slackshot.model.SlackTask;
 import com.dlocal.slackshot.repository.ScreenshotRepository;
 import com.dlocal.slackshot.repository.SiteRepository;
+import com.dlocal.slackshot.repository.ScreenshotTaskRepository;
+import com.dlocal.slackshot.repository.SlackTaskRepository;
 import com.dlocal.slackshot.service.ScreenshotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +35,12 @@ public class SiteController {
     
     @Autowired
     private ScreenshotService screenshotService;
+
+    @Autowired
+    private ScreenshotTaskRepository screenshotTaskRepository;
+
+    @Autowired
+    private SlackTaskRepository slackTaskRepository;
 
     /**
      * Add a new site
@@ -109,6 +119,63 @@ public class SiteController {
     }
 
     /**
+     * Get sites with task information
+     */
+    @GetMapping("/list/with-tasks")
+    public ResponseEntity<List<SiteWithTasksResponse>> getSitesWithTasks() {
+        try {
+            List<Site> sites = siteRepository.findAll();
+            List<SiteWithTasksResponse> sitesWithTasks = sites.stream()
+                .map(site -> {
+                    SiteWithTasksResponse response = new SiteWithTasksResponse();
+                    response.setSite(site);
+                    
+                    List<ScreenshotTask> screenshotTasks = screenshotTaskRepository.findBySiteAndActiveTrue(site);
+                    List<SlackTask> slackTasks = slackTaskRepository.findBySiteAndActiveTrue(site);
+                    
+                    response.setScreenshotTasks(screenshotTasks);
+                    response.setSlackTasks(slackTasks);
+                    response.setTotalTasks(screenshotTasks.size() + slackTasks.size());
+                    
+                    return response;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            return ResponseEntity.ok(sitesWithTasks);
+        } catch (Exception e) {
+            log.error("Error getting sites with tasks", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(null);
+        }
+    }
+
+    /**
+     * Get site statistics
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<SiteStatsResponse> getSiteStats() {
+        try {
+            long totalSites = siteRepository.count();
+            long totalScreenshotTasks = screenshotTaskRepository.countByActiveTrue();
+            long totalSlackTasks = slackTaskRepository.countByActiveTrue();
+            long totalScreenshots = screenshotRepository.count();
+            
+            SiteStatsResponse stats = new SiteStatsResponse();
+            stats.setTotalSites(totalSites);
+            stats.setTotalScreenshotTasks(totalScreenshotTasks);
+            stats.setTotalSlackTasks(totalSlackTasks);
+            stats.setTotalScreenshots(totalScreenshots);
+            stats.setTotalTasks(totalScreenshotTasks + totalSlackTasks);
+            
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            log.error("Error getting site stats", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(null);
+        }
+    }
+
+    /**
      * Get site by name
      */
     @GetMapping("/{name}")
@@ -139,5 +206,47 @@ public class SiteController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error deleting site: " + e.getMessage());
         }
+    }
+
+    public static class SiteWithTasksResponse {
+        private Site site;
+        private List<ScreenshotTask> screenshotTasks;
+        private List<SlackTask> slackTasks;
+        private int totalTasks;
+
+        public Site getSite() { return site; }
+        public void setSite(Site site) { this.site = site; }
+        
+        public List<ScreenshotTask> getScreenshotTasks() { return screenshotTasks; }
+        public void setScreenshotTasks(List<ScreenshotTask> screenshotTasks) { this.screenshotTasks = screenshotTasks; }
+        
+        public List<SlackTask> getSlackTasks() { return slackTasks; }
+        public void setSlackTasks(List<SlackTask> slackTasks) { this.slackTasks = slackTasks; }
+        
+        public int getTotalTasks() { return totalTasks; }
+        public void setTotalTasks(int totalTasks) { this.totalTasks = totalTasks; }
+    }
+
+    public static class SiteStatsResponse {
+        private long totalSites;
+        private long totalScreenshotTasks;
+        private long totalSlackTasks;
+        private long totalScreenshots;
+        private long totalTasks;
+
+        public long getTotalSites() { return totalSites; }
+        public void setTotalSites(long totalSites) { this.totalSites = totalSites; }
+        
+        public long getTotalScreenshotTasks() { return totalScreenshotTasks; }
+        public void setTotalScreenshotTasks(long totalScreenshotTasks) { this.totalScreenshotTasks = totalScreenshotTasks; }
+        
+        public long getTotalSlackTasks() { return totalSlackTasks; }
+        public void setTotalSlackTasks(long totalSlackTasks) { this.totalSlackTasks = totalSlackTasks; }
+        
+        public long getTotalScreenshots() { return totalScreenshots; }
+        public void setTotalScreenshots(long totalScreenshots) { this.totalScreenshots = totalScreenshots; }
+        
+        public long getTotalTasks() { return totalTasks; }
+        public void setTotalTasks(long totalTasks) { this.totalTasks = totalTasks; }
     }
 } 
