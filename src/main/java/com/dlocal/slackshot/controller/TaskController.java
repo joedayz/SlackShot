@@ -6,7 +6,8 @@ import com.dlocal.slackshot.model.Site;
 import com.dlocal.slackshot.repository.ScreenshotTaskRepository;
 import com.dlocal.slackshot.repository.SlackTaskRepository;
 import com.dlocal.slackshot.repository.SiteRepository;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +20,9 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@Slf4j
 public class TaskController {
+
+    private static final Logger log = LoggerFactory.getLogger(TaskController.class);
 
     @Autowired
     private ScreenshotTaskRepository screenshotTaskRepository;
@@ -46,7 +48,7 @@ public class TaskController {
             ScreenshotTask task = new ScreenshotTask();
             task.setSite(site.get());
             task.setScheduledTime(request.getTime());
-            task.setInterval(request.getInterval());
+            task.setTaskInterval(request.getInterval());
             task.setActive(true);
             task.setCreatedAt(LocalDateTime.now());
             
@@ -77,7 +79,7 @@ public class TaskController {
             SlackTask task = new SlackTask();
             task.setSite(site.get());
             task.setScheduledTime(request.getTime());
-            task.setInterval(request.getInterval());
+            task.setTaskInterval(request.getInterval());
             task.setSlackToken(request.getSlackToken());
             task.setSlackChannel(request.getSlackChannel());
             task.setActive(true);
@@ -100,7 +102,7 @@ public class TaskController {
      */
     @GetMapping("/api/screenshot/tasks")
     public ResponseEntity<List<ScreenshotTask>> getAllScreenshotTasks() {
-        List<ScreenshotTask> tasks = screenshotTaskRepository.findByActiveTrue();
+        List<ScreenshotTask> tasks = screenshotTaskRepository.findAll();
         return ResponseEntity.ok(tasks);
     }
 
@@ -109,7 +111,7 @@ public class TaskController {
      */
     @GetMapping("/api/slack/tasks")
     public ResponseEntity<List<SlackTask>> getAllSlackTasks() {
-        List<SlackTask> tasks = slackTaskRepository.findByActiveTrue();
+        List<SlackTask> tasks = slackTaskRepository.findAll();
         return ResponseEntity.ok(tasks);
     }
 
@@ -117,21 +119,24 @@ public class TaskController {
      * Delete a screenshot task
      */
     @DeleteMapping("/api/screenshot/task/{id}")
-    public ResponseEntity<?> deleteScreenshotTask(@PathVariable Long id) {
+    public ResponseEntity<?> deleteScreenshotTask(@PathVariable("id") Long id) {
         try {
             Optional<ScreenshotTask> task = screenshotTaskRepository.findById(id);
-            if (task.isPresent()) {
-                task.get().setActive(false);
-                screenshotTaskRepository.save(task.get());
-                log.info("Screenshot task deactivated: {}", id);
-                return ResponseEntity.ok().body("Screenshot task deactivated successfully");
-            } else {
+            if (task.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
+            
+            ScreenshotTask screenshotTask = task.get();
+            screenshotTask.setActive(false);
+            screenshotTaskRepository.save(screenshotTask);
+            
+            log.info("Screenshot task deactivated: {}", id);
+            return ResponseEntity.ok().body("Screenshot task deactivated successfully");
+            
         } catch (Exception e) {
-            log.error("Error deleting screenshot task: {}", id, e);
+            log.error("Error deactivating screenshot task: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error deleting screenshot task: " + e.getMessage());
+                .body("Error deactivating screenshot task: " + e.getMessage());
         }
     }
 
@@ -139,25 +144,28 @@ public class TaskController {
      * Delete a Slack task
      */
     @DeleteMapping("/api/slack/task/{id}")
-    public ResponseEntity<?> deleteSlackTask(@PathVariable Long id) {
+    public ResponseEntity<?> deleteSlackTask(@PathVariable("id") Long id) {
         try {
             Optional<SlackTask> task = slackTaskRepository.findById(id);
-            if (task.isPresent()) {
-                task.get().setActive(false);
-                slackTaskRepository.save(task.get());
-                log.info("Slack task deactivated: {}", id);
-                return ResponseEntity.ok().body("Slack task deactivated successfully");
-            } else {
+            if (task.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
+            
+            SlackTask slackTask = task.get();
+            slackTask.setActive(false);
+            slackTaskRepository.save(slackTask);
+            
+            log.info("Slack task deactivated: {}", id);
+            return ResponseEntity.ok().body("Slack task deactivated successfully");
+            
         } catch (Exception e) {
-            log.error("Error deleting Slack task: {}", id, e);
+            log.error("Error deactivating Slack task: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error deleting Slack task: " + e.getMessage());
+                .body("Error deactivating Slack task: " + e.getMessage());
         }
     }
 
-    // Request DTOs
+    // Inner classes for request bodies
     public static class ScreenshotTaskRequest {
         private String siteName;
         private LocalDateTime time;

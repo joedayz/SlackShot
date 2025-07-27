@@ -9,7 +9,8 @@ import com.dlocal.slackshot.model.Site.LoginType;
 import com.dlocal.slackshot.repository.ScreenshotRepository;
 import com.dlocal.slackshot.repository.ScreenshotTaskRepository;
 import com.dlocal.slackshot.repository.SiteRepository;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -23,8 +24,9 @@ import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.open;
 
 @Service
-@Slf4j
 public class ScreenshotService {
+
+    private static final Logger log = LoggerFactory.getLogger(ScreenshotService.class);
 
     @Autowired
     private ScreenshotRepository screenshotRepository;
@@ -54,7 +56,7 @@ public class ScreenshotService {
             Selenide.sleep(3000);
             
             // Take screenshot using Selenide
-            byte[] screenshotBytes = Selenide.screenshotAsBytes();
+            byte[] screenshotBytes = ((org.openqa.selenium.TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(org.openqa.selenium.OutputType.BYTES);
             
             // Create screenshot entity
             Screenshot screenshot = new Screenshot();
@@ -99,69 +101,50 @@ public class ScreenshotService {
             }
         } catch (Exception e) {
             log.error("Error during login for site: {}", site.getName(), e);
+            throw e;
         }
     }
     
     private void handleJenkinsLogin(Site site) {
-        // Wait for username field and fill it
-        $("#j_username")
-            .shouldBe(visible)
-            .setValue(site.getUsername());
-        
-        // Find password field and submit
-        $("[name='j_password']")
-            .shouldBe(visible)
-            .setValue(site.getPassword())
-            .pressEnter();
-        
-        // Wait for login to complete
-        Selenide.sleep(3000);
+        log.info("Handling Jenkins login for user: {}", site.getUsername());
+        try {
+            $("input[name='j_username']").shouldBe(visible).setValue(site.getUsername());
+            $("input[name='j_password']").shouldBe(visible).setValue(site.getPassword());
+            $("input[type='submit']").shouldBe(visible).click();
+            Selenide.sleep(3000);
+            log.info("Jenkins login completed successfully");
+        } catch (Exception e) {
+            log.error("Error during Jenkins login", e);
+            throw e;
+        }
     }
     
     private void handleGithubLogin(Site site) {
-        // Wait for login field and fill it
-        $("#login_field")
-            .shouldBe(visible)
-            .setValue(site.getUsername());
-        
-        // Find password field and submit
-        $("#password")
-            .shouldBe(visible)
-            .setValue(site.getPassword())
-            .pressEnter();
-        
-        // Wait for login to complete
-        Selenide.sleep(3000);
+        log.info("Handling GitHub login for user: {}", site.getUsername());
+        try {
+            $("input[name='login']").shouldBe(visible).setValue(site.getUsername());
+            $("input[name='password']").shouldBe(visible).setValue(site.getPassword());
+            $("input[type='submit']").shouldBe(visible).click();
+            Selenide.sleep(3000);
+            log.info("GitHub login completed successfully");
+        } catch (Exception e) {
+            log.error("Error during GitHub login", e);
+            throw e;
+        }
     }
     
     private void handleNewRelicLogin(Site site) {
         log.info("Handling New Relic login for user: {}", site.getUsername());
-        
         try {
-            // Wait for email input field and fill it
-            $("input[type='email']")
-                .shouldBe(visible)
-                .setValue(site.getUsername());
-            
-            // Click the Next button
-            $("button[type='submit']")
-                .shouldBe(visible)
-                .click();
-            
-            // Wait for Google SSO redirect or direct login
+            $("input[type='email']").shouldBe(visible).setValue(site.getUsername());
+            $("button[type='submit']").shouldBe(visible).click();
             Selenide.sleep(5000);
-            
-            // Check if we need to handle Google SSO
             if (WebDriverRunner.url().contains("accounts.google.com")) {
                 log.info("Google SSO detected, waiting for automatic redirect...");
-                Selenide.sleep(10000); // Wait longer for SSO completion
+                Selenide.sleep(10000);
             }
-            
-            // Wait for dashboard to load
             Selenide.sleep(5000);
-            
             log.info("New Relic login completed successfully");
-            
         } catch (Exception e) {
             log.error("Error during New Relic login", e);
             throw e;
@@ -179,13 +162,14 @@ public class ScreenshotService {
         
         for (ScreenshotTask task : dueTasks) {
             try {
-                log.info("Processing screenshot task for site: {}", task.getSite().getName());
+                log.info("Processing screenshot task for site: {} at {} with interval: {}", 
+                    task.getSite().getName(), task.getScheduledTime(), task.getTaskInterval());
                 
                 // Take screenshot
-                Screenshot screenshot = takeScreenshot(task.getSite());
+                takeScreenshot(task.getSite());
                 
                 // Update next scheduled time
-                task.setScheduledTime(task.getScheduledTime().plus(task.getInterval()));
+                task.setScheduledTime(task.getScheduledTime().plus(task.getTaskInterval()));
                 taskRepository.save(task);
                 
                 log.info("Screenshot task completed for site: {}", task.getSite().getName());
@@ -197,23 +181,19 @@ public class ScreenshotService {
     }
     
     /**
-     * Get the latest screenshot for a site
+     * Get the latest screenshot for a given site
      */
     public Screenshot getLatestScreenshot(String siteName) {
-        Site site = siteRepository.findByName(siteName)
-            .orElseThrow(() -> new RuntimeException("Site not found: " + siteName));
-            
-        return screenshotRepository.findFirstBySiteOrderByCreatedAtDesc(site)
-            .orElseThrow(() -> new RuntimeException("No screenshots found for site: " + siteName));
+        return screenshotRepository.findLatestBySiteName(siteName)
+            .orElseThrow(() -> new RuntimeException("No screenshot found for site: " + siteName));
     }
     
     /**
-     * Take a screenshot immediately for a specific site
+     * Take a screenshot immediately for a given site
      */
     public Screenshot takeScreenshotNow(String siteName) {
         Site site = siteRepository.findByName(siteName)
             .orElseThrow(() -> new RuntimeException("Site not found: " + siteName));
-        
         return takeScreenshot(site);
     }
 } 

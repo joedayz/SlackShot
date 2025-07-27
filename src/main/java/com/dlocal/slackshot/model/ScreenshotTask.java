@@ -1,18 +1,12 @@
 package com.dlocal.slackshot.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.Duration;
 
 @Entity
 @Table(name = "screenshot_tasks")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ScreenshotTask {
     
     @Id
@@ -26,11 +20,41 @@ public class ScreenshotTask {
     @Column(nullable = false)
     private LocalDateTime scheduledTime;
     
-    @Column(nullable = false)
-    private Duration interval;
+    @Column(name = "task_interval", nullable = false)
+    private Duration taskInterval;
     
     private boolean active = true;
     
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+    
+    // Constructors
+    public ScreenshotTask() {}
+    
+    public ScreenshotTask(Site site, LocalDateTime scheduledTime, Duration taskInterval, boolean active, LocalDateTime createdAt) {
+        this.site = site;
+        this.scheduledTime = scheduledTime;
+        this.taskInterval = taskInterval;
+        this.active = active;
+        this.createdAt = createdAt;
+    }
+    
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public Site getSite() { return site; }
+    public void setSite(Site site) { this.site = site; }
+    
+    public LocalDateTime getScheduledTime() { return scheduledTime; }
+    public void setScheduledTime(LocalDateTime scheduledTime) { this.scheduledTime = scheduledTime; }
+    
+    public Duration getTaskInterval() { return taskInterval; }
+    public void setTaskInterval(Duration taskInterval) { this.taskInterval = taskInterval; }
+    
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 } 

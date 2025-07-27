@@ -43,8 +43,8 @@ logging:
 # Selenide configuration
 selenide:
   browser: chrome
-  headless: true
-  timeout: 10000
+  headless: false
+  timeout: 30000
   polling-interval: 200
   reportsFolder: target/selenide-reports
   downloadsFolder: target/downloads
@@ -55,16 +55,15 @@ selenide:
   reopenBrowserOnFail: false
   clickViaJs: false
   remote: false
-  browserBinary: ""
+  browserBinary: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
   pageLoadStrategy: normal
   proxyEnabled: false
   fileDownload: PROXY
   holdBrowserOpen: false
   fastSetValue: false
   runViaArachnid: false
-  pageLoadTimeout: 30000
+  pageLoadTimeout: 60000
   scriptTimeout: 30000
-  pageLoadStrategy: normal
 
 # Screenshot configuration - Use environment variables
 screenshot:

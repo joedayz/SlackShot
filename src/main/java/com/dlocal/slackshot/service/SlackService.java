@@ -9,7 +9,8 @@ import com.slack.api.methods.request.files.FilesUploadRequest;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.response.files.FilesUploadResponse;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,8 +21,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
-@Slf4j
 public class SlackService {
+
+    private static final Logger log = LoggerFactory.getLogger(SlackService.class);
 
     @Autowired
     private SlackTaskRepository slackTaskRepository;
@@ -42,7 +44,7 @@ public class SlackService {
             FilesUploadRequest uploadRequest = FilesUploadRequest.builder()
                 .token(slackToken)
                 .channels(List.of(channel))
-                .file(screenshot.getImageData())
+                .fileData(screenshot.getImageData())
                 .filename(generateFilename(screenshot))
                 .title("Screenshot: " + screenshot.getName())
                 .initialComment(":ghost: Screenshot from " + screenshot.getName() + " at " + 
@@ -103,14 +105,14 @@ public class SlackService {
             try {
                 log.info("Processing Slack task for site: {}", task.getSite().getName());
                 
-                // Get the latest screenshot for this site
+                // Get the latest screenshot for the site
                 Screenshot screenshot = screenshotService.getLatestScreenshot(task.getSite().getName());
                 
                 // Send to Slack
                 sendScreenshotToSlack(screenshot, task.getSlackToken(), task.getSlackChannel());
                 
                 // Update next scheduled time
-                task.setScheduledTime(task.getScheduledTime().plus(task.getInterval()));
+                task.setScheduledTime(task.getScheduledTime().plus(task.getTaskInterval()));
                 slackTaskRepository.save(task);
                 
                 log.info("Slack task completed for site: {}", task.getSite().getName());
@@ -120,10 +122,10 @@ public class SlackService {
             }
         }
     }
-
+    
     private String generateFilename(Screenshot screenshot) {
-        return String.format("screenshot_%s_%s.png", 
-            screenshot.getName(),
-            screenshot.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
+        return screenshot.getName() + "_" + 
+               screenshot.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")) + 
+               "." + screenshot.getType();
     }
 } 
