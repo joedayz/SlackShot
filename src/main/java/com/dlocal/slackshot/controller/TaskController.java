@@ -165,13 +165,11 @@ public class TaskController {
         }
     }
 
-    // Inner classes for request bodies
     public static class ScreenshotTaskRequest {
         private String siteName;
         private LocalDateTime time;
         private Duration interval;
 
-        // Getters and setters
         public String getSiteName() { return siteName; }
         public void setSiteName(String siteName) { this.siteName = siteName; }
         public LocalDateTime getTime() { return time; }
@@ -187,7 +185,6 @@ public class TaskController {
         private String slackToken;
         private String slackChannel;
 
-        // Getters and setters
         public String getSiteName() { return siteName; }
         public void setSiteName(String siteName) { this.siteName = siteName; }
         public LocalDateTime getTime() { return time; }

@@ -31,7 +31,6 @@ public class Screenshot {
     @JoinColumn(name = "site_id")
     private Site site;
     
-    // Constructors
     public Screenshot() {}
     
     public Screenshot(String name, String url, String type, LocalDateTime createdAt, byte[] imageData, Site site) {
@@ -43,7 +42,6 @@ public class Screenshot {
         this.site = site;
     }
     
-    // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

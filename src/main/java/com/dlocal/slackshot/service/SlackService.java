@@ -40,7 +40,6 @@ public class SlackService {
         try {
             log.info("Sending screenshot to Slack channel: {}", channel);
             
-            // Upload file to Slack
             FilesUploadRequest uploadRequest = FilesUploadRequest.builder()
                 .token(slackToken)
                 .channels(List.of(channel))
@@ -95,7 +94,7 @@ public class SlackService {
     /**
      * Scheduled task that runs every minute to check for due Slack tasks
      */
-    @Scheduled(fixedRate = 60000) // Run every minute
+    @Scheduled(fixedRate = 60000)
     public void processSlackTasks() {
         log.debug("Checking for due Slack tasks...");
         
@@ -105,13 +104,10 @@ public class SlackService {
             try {
                 log.info("Processing Slack task for site: {}", task.getSite().getName());
                 
-                // Get the latest screenshot for the site
                 Screenshot screenshot = screenshotService.getLatestScreenshot(task.getSite().getName());
                 
-                // Send to Slack
                 sendScreenshotToSlack(screenshot, task.getSlackToken(), task.getSlackChannel());
                 
-                // Update next scheduled time
                 task.setScheduledTime(task.getScheduledTime().plus(task.getTaskInterval()));
                 slackTaskRepository.save(task);
                 

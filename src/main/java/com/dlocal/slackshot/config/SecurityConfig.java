@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .anyRequest().permitAll()
             )
             .addFilterBefore(new ApiKeyAuthFilter(authKey), BasicAuthenticationFilter.class)
-            .headers(headers -> headers.frameOptions().disable()); // For H2 console
+            .headers(headers -> headers.frameOptions().disable());
         
         return http.build();
     }

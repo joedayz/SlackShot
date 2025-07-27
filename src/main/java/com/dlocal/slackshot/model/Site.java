@@ -32,7 +32,6 @@ public class Site {
         NEWRELIC
     }
     
-    // Constructors
     public Site() {}
     
     public Site(String name, String url, LoginType loginType, String username, String password) {
@@ -43,7 +42,6 @@ public class Site {
         this.password = password;
     }
     
-    // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

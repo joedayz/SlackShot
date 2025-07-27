@@ -28,7 +28,6 @@ public class ScreenshotTask {
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
     
-    // Constructors
     public ScreenshotTask() {}
     
     public ScreenshotTask(Site site, LocalDateTime scheduledTime, Duration taskInterval, boolean active, LocalDateTime createdAt) {
@@ -39,7 +38,6 @@ public class ScreenshotTask {
         this.createdAt = createdAt;
     }
     
-    // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

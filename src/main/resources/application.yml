@@ -30,7 +30,6 @@ spring:
       name: admin
       password: admin
 
-# Logging configuration
 logging:
   level:
     com.dlocal.slackshot: INFO
@@ -40,7 +39,6 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
-# Selenide configuration
 selenide:
   browser: chrome
   headless: false
@@ -65,27 +63,22 @@ selenide:
   pageLoadTimeout: 60000
   scriptTimeout: 30000
 
-# Screenshot configuration - Use environment variables
 screenshot:
   key: ${SCREENSHOT_KEY:default-screenshot-key}
   service:
     key: ${SCREENSHOT_SERVICE_KEY:default-service-key}
 
-# Slack configuration - Use environment variables
 slack:
   service:
     key: ${SLACK_SERVICE_KEY:default-slack-key}
 
-# Authentication - Use environment variables
 auth:
   key: ${AUTH_KEY:default-auth-key}
 
-# Debug configuration (optional)
 debug:
   port: 6060
   user: ${DEBUG_USER:user}
   pass: ${DEBUG_PASS:pass}
 
-# Event store configuration (optional)
 eventstore:
   host: ${EVENTSTORE_HOST:} 

@@ -28,7 +28,6 @@ public class WebDriverConfig {
         com.codeborne.selenide.Configuration.timeout = timeout;
         com.codeborne.selenide.Configuration.browserSize = browserSize;
         
-        // Modern Chrome options for W3C compatibility
         Map<String, Object> chromeOptions = Map.of(
             "args", List.of(
                 "--no-sandbox",

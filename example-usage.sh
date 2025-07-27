@@ -1,15 +1,11 @@
 #!/bin/bash
 
-# SlackShot API Example Usage
-# This script demonstrates how to use the SlackShot API
-
 BASE_URL="http://localhost:3030"
 AUTH_KEY="your-auth-key-here"
 
 echo "SlackShot API Example Usage"
 echo "=========================="
 
-# Function to make authenticated requests
 make_request() {
     local method=$1
     local endpoint=$2

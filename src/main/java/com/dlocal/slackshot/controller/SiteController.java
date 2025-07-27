@@ -38,7 +38,6 @@ public class SiteController {
     @PutMapping
     public ResponseEntity<?> addSite(@Valid @RequestBody Site site) {
         try {
-            // Validate login type and credentials
             if (site.getLoginType() != Site.LoginType.NONE) {
                 if (site.getUsername() == null || site.getUsername().isEmpty()) {
                     return ResponseEntity.badRequest().body("Username is required for login type: " + site.getLoginType());
@@ -50,7 +49,6 @@ public class SiteController {
                 }
             }
             
-            // Check if site already exists
             if (siteRepository.existsByName(site.getName())) {
                 return ResponseEntity.badRequest().body("Site with name '" + site.getName() + "' already exists");
             }

@@ -44,21 +44,16 @@ public class ScreenshotService {
         log.info("Taking screenshot for site: {}", site.getName());
         
         try {
-            // Open the site
             open(site.getUrl());
             
-            // Handle login if required
             if (site.getLoginType() != LoginType.NONE) {
                 handleLogin(site);
             }
             
-            // Wait for page to load completely
             Selenide.sleep(3000);
             
-            // Take screenshot using Selenide
             byte[] screenshotBytes = ((org.openqa.selenium.TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(org.openqa.selenium.OutputType.BYTES);
             
-            // Create screenshot entity
             Screenshot screenshot = new Screenshot();
             screenshot.setName(site.getName());
             screenshot.setUrl(site.getUrl());
@@ -67,7 +62,6 @@ public class ScreenshotService {
             screenshot.setImageData(screenshotBytes);
             screenshot.setSite(site);
             
-            // Save to database
             Screenshot savedScreenshot = screenshotRepository.save(screenshot);
             log.info("Screenshot saved with ID: {}", savedScreenshot.getId());
             
@@ -77,7 +71,6 @@ public class ScreenshotService {
             log.error("Error taking screenshot for site: {}", site.getName(), e);
             throw new RuntimeException("Failed to take screenshot", e);
         } finally {
-            // Close browser
             if (WebDriverRunner.hasWebDriverStarted()) {
                 WebDriverRunner.closeWebDriver();
             }
@@ -154,7 +147,7 @@ public class ScreenshotService {
     /**
      * Scheduled task that runs every minute to check for due screenshot tasks
      */
-    @Scheduled(fixedRate = 60000) // Run every minute
+    @Scheduled(fixedRate = 60000)
     public void processScreenshotTasks() {
         log.debug("Checking for due screenshot tasks...");
         
@@ -165,10 +158,8 @@ public class ScreenshotService {
                 log.info("Processing screenshot task for site: {} at {} with interval: {}", 
                     task.getSite().getName(), task.getScheduledTime(), task.getTaskInterval());
                 
-                // Take screenshot
                 takeScreenshot(task.getSite());
                 
-                // Update next scheduled time
                 task.setScheduledTime(task.getScheduledTime().plus(task.getTaskInterval()));
                 taskRepository.save(task);
                 
