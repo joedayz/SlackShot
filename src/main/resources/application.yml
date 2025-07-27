@@ -53,7 +53,6 @@ selenide:
   reopenBrowserOnFail: false
   clickViaJs: false
   remote: false
-  browserBinary: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
   pageLoadStrategy: normal
   proxyEnabled: false
   fileDownload: PROXY
