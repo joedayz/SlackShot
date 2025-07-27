@@ -1,0 +1,92 @@
+server:
+  port: 3030
+
+spring:
+  application:
+    name: slackshot
+  
+  datasource:
+    url: jdbc:h2:file:./slackshot_db
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+  
+  security:
+    user:
+      name: admin
+      password: admin
+
+# Logging configuration
+logging:
+  level:
+    com.dlocal.slackshot: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Selenide configuration
+selenide:
+  browser: chrome
+  headless: true
+  timeout: 10000
+  polling-interval: 200
+  reportsFolder: target/selenide-reports
+  downloadsFolder: target/downloads
+  browserSize: 1920x1200
+  webdriverLogsEnabled: true
+  screenshots: true
+  savePageSource: false
+  reopenBrowserOnFail: false
+  clickViaJs: false
+  remote: false
+  browserBinary: ""
+  pageLoadStrategy: normal
+  proxyEnabled: false
+  fileDownload: PROXY
+  holdBrowserOpen: false
+  fastSetValue: false
+  runViaArachnid: false
+  pageLoadTimeout: 30000
+  scriptTimeout: 30000
+  pageLoadStrategy: normal
+
+# Screenshot configuration - Use environment variables
+screenshot:
+  key: ${SCREENSHOT_KEY:default-screenshot-key}
+  service:
+    key: ${SCREENSHOT_SERVICE_KEY:default-service-key}
+
+# Slack configuration - Use environment variables
+slack:
+  service:
+    key: ${SLACK_SERVICE_KEY:default-slack-key}
+
+# Authentication - Use environment variables
+auth:
+  key: ${AUTH_KEY:default-auth-key}
+
+# Debug configuration (optional)
+debug:
+  port: 6060
+  user: ${DEBUG_USER:user}
+  pass: ${DEBUG_PASS:pass}
+
+# Event store configuration (optional)
+eventstore:
+  host: ${EVENTSTORE_HOST:} 

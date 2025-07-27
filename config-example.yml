@@ -1,0 +1,23 @@
+# Example configuration file - DO NOT PUT REAL TOKENS HERE
+# Copy this file to config-local.yml and add your actual tokens
+
+slack:
+  service:
+    key: xoxb-your-slack-bot-token-here
+
+auth:
+  key: your-auth-key-here
+
+screenshot:
+  key: your-screenshot-key-here
+  service:
+    key: your-screenshot-service-key-here
+
+# Optional debug configuration
+debug:
+  user: your-debug-user
+  pass: your-debug-password
+
+# Optional event store
+eventstore:
+  host: your-eventstore-host 
