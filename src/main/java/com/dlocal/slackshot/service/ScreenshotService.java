@@ -9,9 +9,11 @@ import com.dlocal.slackshot.model.Site.LoginType;
 import com.dlocal.slackshot.repository.ScreenshotRepository;
 import com.dlocal.slackshot.repository.ScreenshotTaskRepository;
 import com.dlocal.slackshot.repository.SiteRepository;
+import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -36,14 +38,19 @@ public class ScreenshotService {
     
     @Autowired
     private SiteRepository siteRepository;
+    
+    @Autowired
+    private WebDriverManager webDriverManager;
 
-    /**
-     * Takes a screenshot of the given site using Selenide
-     */
     public Screenshot takeScreenshot(Site site) {
         log.info("Taking screenshot for site: {}", site.getName());
         
+        WebDriver driver = null;
         try {
+            driver = webDriverManager.getDriver();
+            
+            WebDriverRunner.setWebDriver(driver);
+            
             open(site.getUrl());
             
             if (site.getLoginType() != LoginType.NONE) {
@@ -52,7 +59,7 @@ public class ScreenshotService {
             
             Selenide.sleep(3000);
             
-            byte[] screenshotBytes = ((org.openqa.selenium.TakesScreenshot) WebDriverRunner.getWebDriver()).getScreenshotAs(org.openqa.selenium.OutputType.BYTES);
+            byte[] screenshotBytes = ((org.openqa.selenium.TakesScreenshot) driver).getScreenshotAs(org.openqa.selenium.OutputType.BYTES);
             
             Screenshot screenshot = new Screenshot();
             screenshot.setName(site.getName());
@@ -71,8 +78,8 @@ public class ScreenshotService {
             log.error("Error taking screenshot for site: {}", site.getName(), e);
             throw new RuntimeException("Failed to take screenshot", e);
         } finally {
-            if (WebDriverRunner.hasWebDriverStarted()) {
-                WebDriverRunner.closeWebDriver();
+            if (driver != null) {
+                webDriverManager.releaseDriver();
             }
         }
     }
@@ -144,9 +151,6 @@ public class ScreenshotService {
         }
     }
     
-    /**
-     * Scheduled task that runs every minute to check for due screenshot tasks
-     */
     @Scheduled(fixedRate = 60000)
     public void processScreenshotTasks() {
         log.debug("Checking for due screenshot tasks...");
@@ -154,34 +158,33 @@ public class ScreenshotService {
         List<ScreenshotTask> dueTasks = taskRepository.findDueTasks(LocalDateTime.now());
         
         for (ScreenshotTask task : dueTasks) {
-            try {
-                log.info("Processing screenshot task for site: {} at {} with interval: {}", 
-                    task.getSite().getName(), task.getScheduledTime(), task.getTaskInterval());
-                
-                takeScreenshot(task.getSite());
-                
-                task.setScheduledTime(task.getScheduledTime().plus(task.getTaskInterval()));
-                taskRepository.save(task);
-                
-                log.info("Screenshot task completed for site: {}", task.getSite().getName());
-                
-            } catch (Exception e) {
-                log.error("Error processing screenshot task for site: {}", task.getSite().getName(), e);
-            }
+            processScreenshotTaskAsync(task);
         }
     }
     
-    /**
-     * Get the latest screenshot for a given site
-     */
+    @Async("webDriverTaskExecutor")
+    public void processScreenshotTaskAsync(ScreenshotTask task) {
+        try {
+            log.info("Processing screenshot task for site: {} at {} with interval: {}", 
+                task.getSite().getName(), task.getScheduledTime(), task.getTaskInterval());
+            
+            takeScreenshot(task.getSite());
+            
+            task.setScheduledTime(task.getScheduledTime().plus(task.getTaskInterval()));
+            taskRepository.save(task);
+            
+            log.info("Screenshot task completed for site: {}", task.getSite().getName());
+            
+        } catch (Exception e) {
+            log.error("Error processing screenshot task for site: {}", task.getSite().getName(), e);
+        }
+    }
+    
     public Screenshot getLatestScreenshot(String siteName) {
         return screenshotRepository.findLatestBySiteName(siteName)
             .orElseThrow(() -> new RuntimeException("No screenshot found for site: " + siteName));
     }
     
-    /**
-     * Take a screenshot immediately for a given site
-     */
     public Screenshot takeScreenshotNow(String siteName) {
         Site site = siteRepository.findByName(siteName)
             .orElseThrow(() -> new RuntimeException("Site not found: " + siteName));

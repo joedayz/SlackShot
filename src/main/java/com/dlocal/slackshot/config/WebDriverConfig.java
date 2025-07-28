@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 @Configuration
 public class WebDriverConfig {
@@ -22,6 +23,9 @@ public class WebDriverConfig {
     @Value("${selenide.browserSize:1920x1200}")
     private String browserSize;
     
+    @Value("${selenide.disableSecurity:false}")
+    private boolean disableSecurity;
+    
     @PostConstruct
     public void setupSelenide() {
         com.codeborne.selenide.Configuration.browser = browser;
@@ -31,17 +35,22 @@ public class WebDriverConfig {
         
         String chromeBinary = findChromeBinary();
         
+        List<String> chromeArgs = new ArrayList<>(List.of(
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--disable-extensions",
+            "--disable-plugins",
+            "--remote-debugging-port=9222"
+        ));
+        
+        if (disableSecurity) {
+            chromeArgs.add("--disable-web-security");
+            chromeArgs.add("--allow-running-insecure-content");
+        }
+        
         Map<String, Object> chromeOptions = Map.of(
-            "args", List.of(
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-gpu",
-                "--disable-extensions",
-                "--disable-plugins",
-                "--disable-web-security",
-                "--allow-running-insecure-content",
-                "--remote-debugging-port=9222"
-            ),
+            "args", chromeArgs,
             "binary", chromeBinary
         );
         
